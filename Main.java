@@ -25,7 +25,7 @@ class Main {
 		System.out.println(output);
 		
 		//store datetime and flighttotals to a text file
-		FileWriter fw = new FileWriter("/home/owner/programmingprojects/bendProjectNotes/Flightscraper/flightdata.txt", true);
+		FileWriter fw = new FileWriter("/path/to/flightdata.txt", true);
 		fw.write(output + "\n");
 		
 		fw.close();
