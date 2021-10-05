@@ -1,22 +1,12 @@
 package flightScraper;
 import java.io.File;
-import java.io.FileInputStream;
-import java.io.InputStream;
-import java.text.SimpleDateFormat;
+import java.io.IOException;
+import java.sql.Connection;
+import java.sql.DriverManager;
+import java.sql.PreparedStatement;
+import java.sql.SQLException;
 import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.time.format.DateTimeFormatter;
-import java.util.ArrayList;
-import java.util.Calendar;
-import java.util.Date;
-import java.util.List;
 import java.util.Scanner;
-
-import org.apache.poi.ss.usermodel.Cell;
-import org.apache.poi.ss.usermodel.Row;
-import org.apache.poi.ss.usermodel.Sheet;
-import org.apache.poi.ss.usermodel.Workbook;
-import org.apache.poi.ss.usermodel.WorkbookFactory;
 import org.openqa.selenium.By;
 import org.openqa.selenium.WebDriver;
 import org.openqa.selenium.firefox.FirefoxBinary;
@@ -28,15 +18,20 @@ import org.openqa.selenium.support.ui.ExpectedConditions;
 import org.openqa.selenium.support.ui.WebDriverWait;
 
 //Creates Scraper object, and also declares scraper methods including fetch (the website), parse (the webpage)
-//TODO: most of this page can be packaged and put into a scraper tools package. fetch and parser need to be separated and can be packaged to some degree as well.
 
 class Scraper{
 	
 	private WebDriver driver;
-	
+	public static int flightTotal;
+	public static String ampm;
+    private static final String INSERT_FLIGHT_TOTALS = "INSERT INTO flightdata" +
+           "  (date, ampm, totalflights) VALUES " +
+            " (?, ?, ?);";
+   private static int currentFlightTotal = 0;
+   
 	//builds the scraper
 	public Scraper() {
-        //TODO: could add boolean anon var to tell me whether we need an anonymous profile or not  
+        
 
 		//setting up geckodriver
         System.setProperty("webdriver.gecko.driver","/home/owner/.mozilla/geckodriver/geckodriver");
@@ -46,7 +41,6 @@ class Scraper{
         FirefoxProfile profile = new FirefoxProfile(new File("/home/owner/.mozilla/firefox/d5kmaqtb.GeckoDriver"));
         FirefoxOptions options = new FirefoxOptions();
 
-
         //options for geckodriver, prevents anonymous profile from being used.
         desired.setCapability(FirefoxOptions.FIREFOX_OPTIONS, options.setBinary(firefoxBinary)); 
         options.addArguments("--profile", "/home/owner/.mozilla/firefox/d5kmaqtb.GeckoDriver");     
@@ -54,8 +48,7 @@ class Scraper{
                
         driver = new FirefoxDriver();
 	}
-	
-	
+		
 	//set driver
 	private void setDriver(WebDriver newDriver) {
 		driver = newDriver;
@@ -66,18 +59,17 @@ class Scraper{
     	
 		//setting private variables.
     	WebDriverWait wait = new WebDriverWait(driver, 30); 
-  	
-		
+  		
     	//get the website. everything below here has to be custom designed for each website.
         driver.get("https://mccarran.com/Flights/Arrivals");           
         
         //respect network resources       
         Thread.sleep((long) Math.floor(Math.random()*(1881)+.102)); //wait, for the specified time (between .102 and 1.982 seconds)
-        Thread.sleep(5000);
+        Thread.sleep(15000);
         //wait until the xpath for time status is available (which it should be after the thread.sleep above) and click it when it is
         wait.until(ExpectedConditions.visibilityOfElementLocated(By.xpath("//*[@id=\"hdr_A_time\"]")));
         driver.findElement(By.xpath("//*[@id=\"hdr_A_time\"]")).click();
-        Thread.sleep(3000);
+        Thread.sleep(13000);
 		return driver;
 	}
 	
@@ -88,7 +80,6 @@ class Scraper{
 		int count = 0;
 		String input;
 		Boolean correctTimeWindow = false;
-		String ampm = "fm";
 		Boolean keepGoing = true;
 		Boolean checkAmPm = false;
 		
@@ -144,21 +135,62 @@ class Scraper{
 		
 		//every two article html tags are associated with 1 flight, so divide count by 2 to get the total flights for the day
 		count = count / 2;		
-		driver.close();
 		return count;
 	}
-	public int scrape () throws InterruptedException{
+	
+	//scrapes the data then sets the flight Total 
+	public void scrape () throws InterruptedException{
 		
-		//TODO: add error print stack trace log
 		
 		//fetch the website we want to scrape
 		setDriver(fetch());
 		
-		//parse the data we want
+		//parse the data we want		
+		flightTotal = parse();
 		
-		return parse();
-		
-		
-		
+		//if the scraped flightTotal is larger than the current static flight total (which persists through each for loop in main) then make the currentflighttotal = to this highest flight total. This is in case of a bad scrape.
+		if (flightTotal > currentFlightTotal) {
+			currentFlightTotal = flightTotal;
+		}
+	
 	}
+	public void publish() throws IOException {
+		
+
+		try {
+			Connection conn = getConnection();
+			//create prep stmt
+			PreparedStatement preparedStatement = conn.prepareStatement(INSERT_FLIGHT_TOTALS); {      	
+				preparedStatement.setString(1, LocalDate.now().toString());
+				preparedStatement.setString(2, ampm); 
+				preparedStatement.setInt(3, currentFlightTotal);        
+			}
+		
+        //update
+			preparedStatement.executeUpdate();
+		}
+		
+		catch (Exception e) {
+			System.out.println("!!!!!!!!!!!!!!!! Error !!!!!!!!!!!!!!!!!");
+			e.printStackTrace();
+		}
+		//we are done scraping and publishing, close the driver
+		driver.close();
+	}
+	
+	//connection to local database
+    private static Connection getConnection() throws ClassNotFoundException, SQLException {
+
+        Class.forName("org.postgresql.Driver");
+        String userName = "postgres"; 
+        String password = ""; 
+        String hostname = "localhost"; 
+        String port = "5432";
+        String jdbcUrl = "jdbc:postgresql://" + hostname + ":" + port + "/vegasstat";
+
+
+        Connection con = DriverManager.getConnection(jdbcUrl, userName, password);
+
+        return con;
+  }
 }
