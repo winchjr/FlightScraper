@@ -4,15 +4,15 @@ To combine at least 3 public data sources to automatically predict how busy Vega
 
 # Inputs
 * Total incoming flights from Mccarran Airport
-*Average hotel price for key hotels on the Strip
-*Traffic data for Las Vegas Blvd provided from Google Traffic API
+* Average hotel price for key hotels on the Strip
+* Traffic data for Las Vegas Blvd provided from Google Traffic API
 
 # Outputs
-*raw data from each input source stored in database
-*analytical predictions based on past trends
+* raw data from each input source stored in database
+* analytical predictions based on past trends
 
 # Technologies
-*Selenium
-*Java
-*Python
-*Postgresql
+* Selenium
+* Java
+* Python
+* Postgresql
