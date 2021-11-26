@@ -1,30 +1,46 @@
 package flightScraper;
 
 import java.io.IOException;
+import java.sql.SQLException;
 
 
-//when called, scrapes mccarran airport arrivals and exports data dump to postgresql for storage.
+//when called, scrapes mccarran airport arrivals and booking website for total amount of flights coming in, then sends to db
 
-class Main {
-		
+class Main {	
 	
-	public static void main (String[] args) throws InterruptedException, IOException {
-		
-		final int totalScrapes = 5;
-		//make a new scraper
-		Scraper scraper = new Scraper();		
-				
-		//scrape five times
-		for (int i = 0; i<totalScrapes; i++) {
-		//tells the scraper to scrape
-		scraper.scrape();				
-	
-		}
-		//publish the flight totals, date, and ampm to the db
-		scraper.publish();
-		
+	public static void main (String[] args) throws InterruptedException, IOException, SQLException, ClassNotFoundException {
+
+		scrapeFlights();
+		scrapeHotels();
+		callPython();
+
 	}
 	
-	
+	private static void scrapeFlights() throws IOException, InterruptedException {
+
+		//set the total amount of scrapes
+		final int totalScrapes = 3;
+		
+		//make a new flightscraper
+		FlightScraper flightScraper = new FlightScraper();
+				
+		//scrape totalScrapes times
+		for (int i = 0; i<totalScrapes; i++) {
+			flightScraper.scrape();
+		}
+		//publish the flight totals, date to db
+		flightScraper.publish();
+
+	}
+	//make new scraper, scrape, then publish
+	private static void scrapeHotels() throws InterruptedException, SQLException, ClassNotFoundException {
+
+		HotelScraper hotelScraper = new HotelScraper();
+		hotelScraper.scrape();
+		hotelScraper.publish();
+	}
+	private static void callPython() {
+		
+	}
 
 }
