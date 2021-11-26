@@ -18,3 +18,4 @@ To combine public data sources to automatically predict how busy Vegas will be o
 
 # Possible Additions
 * Predictions using Google Traffic API of Strip traffic
+* Add future predictions based on hotel pricing (1, 2, and 4 weeks ahead)
