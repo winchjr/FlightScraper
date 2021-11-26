@@ -45,7 +45,7 @@ class Scraper{
 
         Class.forName("org.postgresql.Driver");
         String userName = "postgres"; 
-        String password = "7777!XGM!@!M"; 
+        String password = ""; 
         String hostname = "localhost"; 
         String port = "5432";
         String jdbcUrl = "jdbc:postgresql://" + hostname + ":" + port + "/vegasstat";
